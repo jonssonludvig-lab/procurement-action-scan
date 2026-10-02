@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Procurement Action Scan – No‑Touch Prototype</title>
+<style>
+:root{--bg:#f5f7f6;--card:#fff;--ink:#17201c;--muted:#66736d;--line:#dfe6e2;--good:#166534;--warn:#9a6700;--bad:#b42318;--accent:#1f6f50}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial;background:var(--bg);color:var(--ink)}
+.wrap{max-width:980px;margin:0 auto;padding:36px 20px 80px}
+.hero{padding:28px 0 18px}.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:42px;line-height:1.04;margin:10px 0 14px;letter-spacing:-.03em}.sub{font-size:19px;color:var(--muted);max-width:720px;line-height:1.5}
+.badge{display:inline-block;background:#eaf4ef;color:#1f6f50;padding:8px 12px;border-radius:99px;font-size:13px;font-weight:700;margin-top:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:18px;box-shadow:0 5px 18px rgba(20,50,35,.04)}
+.drop{border:2px dashed #a8b7af;border-radius:16px;padding:42px 20px;text-align:center;cursor:pointer;background:#fbfcfb}
+.drop.drag{border-color:var(--accent);background:#f0f8f4}.drop strong{display:block;font-size:19px;margin-bottom:8px}
+.small{font-size:13px;color:var(--muted)}input[type=file]{display:none}
+button{border:0;border-radius:12px;padding:12px 17px;font-weight:700;font-size:15px;cursor:pointer}.primary{background:var(--ink);color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
+.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{border:1px solid var(--line);border-radius:13px;padding:15px}.metric b{display:block;font-size:22px}.metric span{font-size:12px;color:var(--muted)}
+.maprow{display:grid;grid-template-columns:1.2fr 1fr;gap:10px;align-items:center;margin:8px 0}.maprow label{font-weight:650;font-size:14px}
+select{width:100%;padding:10px;border:1px solid #cbd6d0;border-radius:10px;background:white}
+.notice{border-radius:12px;padding:13px 15px;margin:12px 0;font-size:14px}.good{background:#ecfdf3;color:var(--good)}.warn{background:#fff8e6;color:var(--warn)}.bad{background:#fef3f2;color:var(--bad)}
+.case{border:1px solid var(--line);border-radius:15px;padding:18px;margin:12px 0}.case h3{margin:0 0 6px;font-size:18px}.money{font-size:25px;font-weight:800;margin:9px 0}.pill{display:inline-block;padding:5px 8px;border-radius:99px;font-size:11px;font-weight:800;background:#eef2ef}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.progress{height:8px;background:#e7ece9;border-radius:99px;overflow:hidden;margin-top:12px}.bar{height:100%;background:var(--accent);width:0}
+@media(max-width:720px){h1{font-size:34px}.grid{grid-template-columns:1fr 1fr}.maprow{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<section class="hero">
+<div class="eyebrow">No-touch prototype v0.2</div>
+<h1>Find the purchase prices worth challenging.</h1>
+<div class="sub">Drop in a CSV export. The scan maps your columns, checks data quality and surfaces a short list of buyer cases. This prototype processes the file locally in your browser.</div>
+<div class="badge">Raw file stays on this device</div>
+</section>
+
+<div class="card">
+<div id="drop" class="drop"><strong>Drop your purchasing CSV here</strong><div class="small">or click to choose a file • comma or semicolon delimiter supported</div><input id="file" type="file" accept=".csv,text/csv"></div>
+<div id="filemeta" class="small" style="margin-top:10px"></div>
+</div>
+
+<div id="mappingCard" class="card hidden"><h2>1. Confirm your data mapping</h2><div class="small">We guessed the meaning of each required field. Change anything that looks wrong.</div><div id="mapping"></div><div id="mappingNotice"></div><div class="actions"><button id="runBtn" class="primary">Run Action Scan</button></div></div>
+
+<div id="healthCard" class="card hidden"><h2>2. Data health</h2><div id="healthGrid" class="grid"></div><div id="healthNotice"></div><div class="progress"><div id="bar" class="bar"></div></div></div>
+
+<div id="resultsCard" class="card hidden"><h2>3. Buyer actions</h2><div id="resultSummary"></div><div id="cases"></div></div>
+</div>
+
+<script>
+const aliases={
+ date:["transaction_date","date","datum","posting date","posting_date","document date"],
+ supplier:["supplier","vendor","leverantör","vendor name","vendor_name","supplier name"],
+ sku:["sku","article","artikelnummer","item no","item_no","article number","item"],
+ quantity:["quantity","qty","antal","invoiced quantity","invoiced_quantity"],
+ price:["unit_price","unit price","inköpspris","direct unit cost","direct_unit_cost","price"],
+ currency:["currency","valuta","currency code","currency_code"],
+ uom:["uom","unit","enhet","unit of measure","base unit"],
+ fx:["fx_to_sek","valutakurs_sek","fx","exchange rate"],
+ desc:["description","artikelbeskrivning","item description","item_description"]
+};
+const required=["date","supplier","sku","quantity","price","currency","uom"];
+let parsed=[],headers=[],delimiter=",";
+function norm(s){return(s||"").toString().trim().toLowerCase().replace(/[^p{L}p{N}]+/gu," ").trim()}
+function esc(s){return(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function detectDelimiter(line){let c=(line.match(/,/g)||[]).length,s=(line.match(/;/g)||[]).length;return s>c?";":","}
+function splitCSV(line,delim){let out=[],cur="",q=false;for(let i=0;i<line.length;i++){let ch=line[i];if(ch=='"'){if(q&&line[i+1]=='"'){cur+='"';i++}else q=!q}else if(ch===delim&&!q){out.push(cur);cur=""}else cur+=ch}out.push(cur);return out}
+function parseCSV(text){const lines=text.replace(//g,"").split("
+").filter(x=>x.length);delimiter=detectDelimiter(lines[0]);headers=splitCSV(lines[0],delimiter).map(x=>x.trim());parsed=lines.slice(1).map(line=>{let vals=splitCSV(line,delimiter),o={};headers.forEach((h,i)=>o[h]=(vals[i]??"").trim());return o})}
+function guess(field){
+ let scored=[];
+ headers.forEach(h=>{
+   let n=norm(h),score=0;
+   aliases[field].forEach(a=>{
+     let an=norm(a);
+     if(n===an) score=Math.max(score,100);
+     else if(an.length>=5 && n.includes(an)) score=Math.max(score,65);
+   });
+   if(score) scored.push([score,h]);
+ });
+ scored.sort((a,b)=>b[0]-a[0]);
+ if(!scored.length) return {value:"",ambiguous:false,candidates:[]};
+ let top=scored[0][0], tops=scored.filter(x=>x[0]===top);
+ if(tops.length>1) return {value:"",ambiguous:true,candidates:tops.map(x=>x[1])};
+ return {value:scored[0][1],ambiguous:false,candidates:[scored[0][1]]};
+}
+function renderMapping(){
+ let box=document.getElementById("mapping");box.innerHTML="";
+ let ambiguities=[];
+ required.forEach(f=>{
+   let row=document.createElement("div");row.className="maprow";
+   let label=document.createElement("label");label.textContent=({date:"Date",supplier:"Supplier",sku:"SKU / article",quantity:"Quantity",price:"Unit price",currency:"Currency",uom:"Unit of measure"})[f];
+   let sel=document.createElement("select");sel.dataset.field=f;
+   sel.innerHTML=`<option value="">— not mapped —</option>`+headers.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join("");
+   let g=guess(f); if(g.value) sel.value=g.value;
+   if(g.ambiguous){sel.dataset.ambiguous="true"; ambiguities.push(`${label.textContent}: ${g.candidates.join(" / ")}`)}
+   sel.addEventListener("change",()=>{sel.dataset.ambiguous="false";validateMapping()});
+   row.append(label,sel);box.append(row)
+ });
+ window._mappingAmbiguities=ambiguities;
+ validateMapping();
+}
+function getMap(){let o={};document.querySelectorAll("#mapping select").forEach(s=>o[s.dataset.field]=s.value);return o}
+function validateMapping(){
+ let m=getMap(),missing=required.filter(f=>!m[f]);
+ let vals=Object.values(m).filter(Boolean),dup=vals.some((x,i,a)=>a.indexOf(x)!==i);
+ let ambiguous=[...document.querySelectorAll("#mapping select")].filter(s=>s.dataset.ambiguous==="true");
+ let n=document.getElementById("mappingNotice"),btn=document.getElementById("runBtn");
+ if(ambiguous.length){
+   n.className="notice warn";
+   n.textContent="We found more than one plausible column for: "+ambiguous.map(s=>s.dataset.field).join(", ")+". Please choose the correct column.";
+   btn.disabled=true;
+ } else if(missing.length){
+   n.className="notice warn";
+   n.textContent="Required data is missing or not mapped: "+missing.join(", ")+". The scan will not run until this is resolved.";
+   btn.disabled=true;
+ } else if(dup){
+   n.className="notice bad";
+   n.textContent="Two required fields are mapped to the same column. Please correct the mapping.";
+   btn.disabled=true;
+ } else {
+   n.className="notice good";
+   n.textContent="Required fields are mapped. You can run the scan.";
+   btn.disabled=false;
+ }
+}
+function num(v){if(v==null)return NaN;let s=v.toString().trim().replace(/s/g,"");if(s.includes(",")&&!s.includes("."))s=s.replace(",",".");else if(s.includes(",")&&s.includes("."))s=s.replace(/,/g,"");return Number(s)}
+function dateVal(v){let d=new Date(v);return isNaN(d)?null:d}
+function median(a){a=[...a].sort((x,y)=>x-y);if(!a.length)return NaN;let m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2}
+function monthKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function showFatal(msg){document.getElementById("resultsCard").classList.remove("hidden");document.getElementById("resultSummary").innerHTML=`<div class="notice bad">${esc(msg)}</div>`}
+function analyze(){
+ const m=getMap(),cleaned=[];let excluded=0;
+ parsed.forEach(r=>{let d=dateVal(r[m.date]),q=num(r[m.quantity]),p=num(r[m.price]),sup=(r[m.supplier]||"").trim(),sku=(r[m.sku]||"").trim(),cur=(r[m.currency]||"").trim(),uom=(r[m.uom]||"").trim();if(!d||!sup||!sku||!cur||!uom||!isFinite(q)||!isFinite(p)||q<=0||p<=0){excluded++;return}cleaned.push({d,q,p,sup,sku,cur,uom})});
+ if(cleaned.length<20){showFatal("Too little usable data after validation.");return}
+ let dates=cleaned.map(x=>x.d),minD=new Date(Math.min(...dates)),maxD=new Date(Math.max(...dates)),suppliers=new Set(cleaned.map(x=>x.sup)),skus=new Set(cleaned.map(x=>x.sku));
+ showHealth(cleaned.length,skus.size,suppliers.size,excluded,minD,maxD);
+ let cases=[],groups={};cleaned.forEach(x=>{let k=[x.sku,x.sup,x.cur,x.uom].join("|||");(groups[k]??=[]).push(x)});
+ let recentStart=new Date(maxD);recentStart.setDate(recentStart.getDate()-120);let baseStart=new Date(recentStart);baseStart.setDate(baseStart.getDate()-240);
+ let drift=[];Object.values(groups).forEach(rr=>{let b=rr.filter(x=>x.d>=baseStart&&x.d<recentStart),r=rr.filter(x=>x.d>=recentStart);if(b.length<3||r.length<2)return;let bp=median(b.map(x=>x.p)),rp=median(r.map(x=>x.p)),chg=rp/bp-1;if(chg>=.055)drift.push({sku:rr[0].sku,sup:rr[0].sup,chg,impact:(rp-bp)*r.reduce((a,x)=>a+x.q,0)*365/120})});
+ let bySup={};drift.forEach(x=>(bySup[x.sup]??=[]).push(x));Object.entries(bySup).forEach(([sup,arr])=>{if(arr.length<3)return;let impact=arr.reduce((a,x)=>a+Math.max(0,x.impact),0),med=median(arr.map(x=>x.chg));cases.push({title:sup+" – broad price increase",impact,confidence:arr.length>=5?"High":"Medium",what:`${arr.length} SKUs show repeated recent price increases. Median increase is ${(med*100).toFixed(1)}%.`,action:"Challenge the supplier-level increase and request a price bridge."})});
+ let skuGroups={};cleaned.forEach(x=>{let k=[x.sku,x.cur,x.uom].join("|||");(skuGroups[k]??=[]).push(x)});
+ Object.values(skuGroups).forEach(rr=>{let by={};rr.forEach(x=>(by[x.sup]??=[]).push(x));let st=Object.entries(by).filter(([s,a])=>a.length>=4).map(([s,a])=>({s,med:median(a.map(x=>x.p)),qty:a.reduce((z,x)=>z+x.q,0),n:a.length}));if(st.length<2)return;st.sort((a,b)=>a.med-b.med);let lo=st[0],hi=st[st.length-1],gap=hi.med/lo.med-1;if(gap<.065)return;let impact=(hi.med-lo.med)*hi.qty;if(impact<500)return;cases.push({title:rr[0].sku+" – supplier price gap",impact,confidence:(gap>=.08&&lo.n>=4&&hi.n>=4)?"High":"Medium",what:`Same SKU and UOM observed at recurring suppliers. Highest median price is ${(gap*100).toFixed(1)}% above the lowest.`,action:"Validate comparable terms and use the lower supplier price as an internal benchmark."})});
+ Object.values(groups).forEach(rr=>{if(rr.length<10)return;let med=median(rr.map(x=>x.p)),lo=rr.filter(x=>Math.abs(x.p/med-1)<=.02),hi=rr.filter(x=>x.p>=med*1.055);if(hi.length<2||lo.length<5)return;let lm=new Set(lo.map(x=>monthKey(x.d))),hm=new Set(hi.map(x=>monthKey(x.d))),ov=[...hm].filter(x=>lm.has(x));if(ov.length<2)return;let hmed=median(hi.map(x=>x.p)),gap=hmed/med-1,impact=hi.reduce((a,x)=>a+(x.p-med)*x.q,0);if(impact<500)return;cases.push({title:rr[0].sku+" – inconsistent pricing",impact,confidence:(ov.length>=3&&gap>=.07)?"High":"Medium",what:`Normal and higher price levels coexist in ${ov.length} months. High-price transactions are ~${(gap*100).toFixed(1)}% above the dominant level.`,action:"Review the higher-priced transactions against agreed commercial terms."})});
+ cases.sort((a,b)=>(b.confidence==="High")-(a.confidence==="High")||b.impact-a.impact);renderCases(cases.slice(0,10));
+}
+function showHealth(n,skus,sups,excluded,minD,maxD){
+ document.getElementById("healthCard").classList.remove("hidden");let months=Math.max(1,Math.round((maxD-minD)/(1000*3600*24*30.4)));document.getElementById("healthGrid").innerHTML=`<div class="metric"><b>${n.toLocaleString()}</b><span>usable rows</span></div><div class="metric"><b>${skus.toLocaleString()}</b><span>SKUs</span></div><div class="metric"><b>${sups.toLocaleString()}</b><span>suppliers</span></div><div class="metric"><b>${months}</b><span>months</span></div>`;let quality=n/(n+excluded),notice=document.getElementById("healthNotice");notice.className="notice "+(quality>=.9?"good":quality>=.75?"warn":"bad");notice.textContent=`${(quality*100).toFixed(1)}% of rows passed the minimum data checks. ${excluded.toLocaleString()} rows were excluded rather than guessed.`;setTimeout(()=>document.getElementById("bar").style.width=(quality*100)+"%",50)
+}
+function renderCases(cases){
+ document.getElementById("resultsCard").classList.remove("hidden");let s=document.getElementById("resultSummary");if(!cases.length){s.innerHTML=`<div class="notice good"><b>No strong buyer cases found.</b> The scan did not invent opportunities just to fill the page.</div>`;document.getElementById("cases").innerHTML="";return}s.innerHTML=`<div class="notice good"><b>${cases.length} buyer cases worth reviewing.</b> Highest-confidence cases are shown first.</div>`;document.getElementById("cases").innerHTML=cases.map((c,i)=>`<div class="case"><span class="pill">${esc(c.confidence)} confidence</span><h3>#${i+1} ${esc(c.title)}</h3><div class="money">${Math.round(c.impact).toLocaleString()} <span class="small">indicative impact in source currency</span></div><p>${esc(c.what)}</p><p><b>Recommended buyer action:</b> ${esc(c.action)}</p></div>`).join("")
+}
+const drop=document.getElementById("drop"),input=document.getElementById("file");drop.onclick=()=>input.click();["dragenter","dragover"].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add("drag")}));["dragleave","drop"].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove("drag")}));drop.addEventListener("drop",e=>handle(e.dataTransfer.files[0]));input.addEventListener("change",e=>handle(e.target.files[0]));
+function handle(file){if(!file)return;let rd=new FileReader();rd.onload=()=>{try{parseCSV(rd.result);document.getElementById("filemeta").textContent=`${file.name} • ${parsed.length.toLocaleString()} rows • detected delimiter: ${delimiter===";"?"semicolon":"comma"}`;document.getElementById("mappingCard").classList.remove("hidden");document.getElementById("healthCard").classList.add("hidden");document.getElementById("resultsCard").classList.add("hidden");renderMapping()}catch(e){document.getElementById("filemeta").innerHTML=`<span style="color:var(--bad)">Could not parse this CSV.</span>`}};rd.readAsText(file)}
+document.getElementById("runBtn").addEventListener("click",analyze);
+</script></body></html>
