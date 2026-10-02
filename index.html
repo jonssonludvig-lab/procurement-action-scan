@@ -147,7 +147,19 @@ function showHealth(n,skus,sups,excluded,minD,maxD){
 function renderCases(cases){
  document.getElementById("resultsCard").classList.remove("hidden");let s=document.getElementById("resultSummary");if(!cases.length){s.innerHTML=`<div class="notice good"><b>No strong buyer cases found.</b> The scan did not invent opportunities just to fill the page.</div>`;document.getElementById("cases").innerHTML="";return}s.innerHTML=`<div class="notice good"><b>${cases.length} buyer cases worth reviewing.</b> Highest-confidence cases are shown first.</div>`;document.getElementById("cases").innerHTML=cases.map((c,i)=>`<div class="case"><span class="pill">${esc(c.confidence)} confidence</span><h3>#${i+1} ${esc(c.title)}</h3><div class="money">${Math.round(c.impact).toLocaleString()} <span class="small">indicative impact in source currency</span></div><p>${esc(c.what)}</p><p><b>Recommended buyer action:</b> ${esc(c.action)}</p></div>`).join("")
 }
-const drop=document.getElementById("drop"),input=document.getElementById("file");drop.onclick=()=>input.click();["dragenter","dragover"].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add("drag")}));["dragleave","drop"].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove("drag")}));drop.addEventListener("drop",e=>handle(e.dataTransfer.files[0]));input.addEventListener("change",e=>handle(e.target.files[0]));
+const drop=document.getElementById("drop"),input=document.getElementById("file");
+drop.addEventListener("click",e=>{if(e.target!==input)input.click()});
+input.addEventListener("click",e=>e.stopPropagation());
+["dragenter","dragover","dragleave","drop"].forEach(type=>{
+  window.addEventListener(type,e=>{e.preventDefault();e.stopPropagation()},{passive:false});
+});
+["dragenter","dragover"].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.add("drag")}));
+["dragleave","drop"].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove("drag")}));
+drop.addEventListener("drop",e=>{
+  const files=e.dataTransfer&&e.dataTransfer.files;
+  if(files&&files.length) handle(files[0]);
+});
+input.addEventListener("change",e=>handle(e.target.files[0]));
 function handle(file){if(!file)return;let rd=new FileReader();rd.onload=()=>{try{parseCSV(rd.result);document.getElementById("filemeta").textContent=`${file.name} • ${parsed.length.toLocaleString()} rows • detected delimiter: ${delimiter===";"?"semicolon":"comma"}`;document.getElementById("mappingCard").classList.remove("hidden");document.getElementById("healthCard").classList.add("hidden");document.getElementById("resultsCard").classList.add("hidden");renderMapping()}catch(e){document.getElementById("filemeta").innerHTML=`<span style="color:var(--bad)">Could not parse this CSV.</span>`}};rd.readAsText(file)}
 document.getElementById("runBtn").addEventListener("click",analyze);
 </script></body></html>
