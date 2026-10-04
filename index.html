@@ -5,44 +5,88 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Procurement Action Scan – prototyp</title>
 <style>
-:root{--bg:#f5f7f6;--card:#fff;--ink:#17201c;--muted:#66736d;--line:#dfe6e2;--good:#166534;--warn:#9a6700;--bad:#b42318;--accent:#1f6f50}
-*{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial;background:var(--bg);color:var(--ink)}
-.wrap{max-width:980px;margin:0 auto;padding:36px 20px 80px}
-.hero{padding:28px 0 18px}.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-h1{font-size:42px;line-height:1.04;margin:10px 0 14px;letter-spacing:-.03em}.sub{font-size:19px;color:var(--muted);max-width:720px;line-height:1.5}
-.badge{display:inline-block;background:#eaf4ef;color:#1f6f50;padding:8px 12px;border-radius:99px;font-size:13px;font-weight:700;margin-top:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:18px;box-shadow:0 5px 18px rgba(20,50,35,.04)}
-.drop{border:2px dashed #a8b7af;border-radius:16px;padding:42px 20px;text-align:center;cursor:pointer;background:#fbfcfb}
-.drop.drag{border-color:var(--accent);background:#f0f8f4}.drop strong{display:block;font-size:19px;margin-bottom:8px}
-.small{font-size:13px;color:var(--muted)}input[type=file]{display:none}
-button{border:0;border-radius:12px;padding:12px 17px;font-weight:700;font-size:15px;cursor:pointer}.primary{background:var(--ink);color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
-.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{border:1px solid var(--line);border-radius:13px;padding:15px}.metric b{display:block;font-size:22px}.metric span{font-size:12px;color:var(--muted)}
-.maprow{display:grid;grid-template-columns:1.2fr 1fr;gap:10px;align-items:center;margin:8px 0}.maprow label{font-weight:650;font-size:14px}
-select{width:100%;padding:10px;border:1px solid #cbd6d0;border-radius:10px;background:white}
-.notice{border-radius:12px;padding:13px 15px;margin:12px 0;font-size:14px}.good{background:#ecfdf3;color:var(--good)}.warn{background:#fff8e6;color:var(--warn)}.bad{background:#fef3f2;color:var(--bad)}
-.case{border:1px solid var(--line);border-radius:15px;padding:18px;margin:12px 0}.case h3{margin:0 0 6px;font-size:18px}.money{font-size:25px;font-weight:800;margin:9px 0}.pill{display:inline-block;padding:5px 8px;border-radius:99px;font-size:11px;font-weight:800;background:#eef2ef}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.progress{height:8px;background:#e7ece9;border-radius:99px;overflow:hidden;margin-top:12px}.bar{height:100%;background:var(--accent);width:0}
-@media(max-width:720px){h1{font-size:34px}.grid{grid-template-columns:1fr 1fr}.maprow{grid-template-columns:1fr}}
+:root{--bg:#f3f6f4;--card:#fff;--ink:#142019;--muted:#68756e;--line:#dce5df;--line2:#edf1ee;--good:#17653b;--warn:#936600;--bad:#b42318;--accent:#1f6f50;--accent2:#dff1e8;--shadow:0 18px 50px rgba(20,50,35,.08)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;background:radial-gradient(circle at 50% 0,#eef7f2 0,#f3f6f4 38%,#f3f6f4 100%);color:var(--ink)}
+.wrap{max-width:1040px;margin:0 auto;padding:26px 20px 96px}
+.hero{padding:44px 0 26px;text-align:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:var(--accent);background:#e9f4ee;border:1px solid #d8ebe1;padding:7px 11px;border-radius:999px}
+h1{font-size:52px;line-height:1.02;margin:18px auto 16px;letter-spacing:-.045em;max-width:820px}
+.sub{font-size:19px;color:var(--muted);max-width:760px;line-height:1.55;margin:0 auto}
+.trustrow{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:20px;color:#496057;font-size:13px;font-weight:650}
+.trustitem{display:flex;align-items:center;gap:7px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:760px;margin:26px auto 0}
+.step{background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:14px;padding:13px 14px;text-align:left;backdrop-filter:blur(8px)}
+.step b{display:block;font-size:13px;margin-bottom:3px}.step span{font-size:12px;color:var(--muted)}
+.card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;padding:26px;margin-top:18px;box-shadow:var(--shadow);animation:rise .32s ease both}
+.card h2{font-size:21px;margin:0 0 6px;letter-spacing:-.02em}
+.cardlead{font-size:14px;color:var(--muted);margin-bottom:18px}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.drop{border:1.5px dashed #94aa9e;border-radius:18px;padding:48px 20px;text-align:center;cursor:pointer;background:linear-gradient(180deg,#fbfdfc,#f7faf8);transition:.2s ease}
+.drop:hover,.drop.drag{border-color:var(--accent);background:#f0f8f4;transform:translateY(-1px);box-shadow:0 8px 24px rgba(31,111,80,.08)}
+.dropicon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;margin:0 auto 13px;background:#eaf5ef;color:var(--accent);font-size:21px;font-weight:900}
+.drop strong{display:block;font-size:19px;margin-bottom:7px}.small{font-size:13px;color:var(--muted)}input[type=file]{display:none}
+button{border:0;border-radius:12px;padding:12px 17px;font-weight:750;font-size:14px;cursor:pointer;transition:.18s ease}
+button:hover{transform:translateY(-1px)}
+.primary{background:var(--ink);color:#fff;box-shadow:0 7px 16px rgba(20,32,25,.12)}
+.secondary{background:#f4f7f5;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.hidden{display:none!important}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.metric{border:1px solid var(--line);border-radius:15px;padding:17px;background:#fbfcfb}
+.metric b{display:block;font-size:23px;letter-spacing:-.025em}.metric span{font-size:12px;color:var(--muted)}
+.maprow{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:center;margin:10px 0}.maprow label{font-weight:700;font-size:14px}
+select{width:100%;padding:11px 12px;border:1px solid #cbd6d0;border-radius:11px;background:white;color:var(--ink)}
+.notice{border-radius:13px;padding:13px 15px;margin:14px 0;font-size:14px}.good{background:#ecf8f1;color:var(--good)}.warn{background:#fff8e6;color:var(--warn)}.bad{background:#fef3f2;color:var(--bad)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.progress{height:7px;background:#e7ece9;border-radius:99px;overflow:hidden;margin-top:14px}.bar{height:100%;background:linear-gradient(90deg,#1f6f50,#3f8b6c);width:0;transition:width .6s ease}
+.case{position:relative;border:1px solid var(--line);border-radius:18px;padding:20px;margin:14px 0;background:#fff;transition:.2s ease;overflow:hidden}
+.case:hover{border-color:#c9d9d0;box-shadow:0 10px 28px rgba(20,50,35,.07);transform:translateY(-1px)}
+.case:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+.casehead{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.case h3{margin:7px 0 5px;font-size:18px;letter-spacing:-.015em}
+.money{font-size:28px;font-weight:850;margin:12px 0 3px;letter-spacing:-.03em}.moneylabel{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;background:#eef4f0;color:#385548}
+.priority{font-size:12px;font-weight:800;color:var(--muted)}
+.actionbox{margin-top:13px;padding:13px 14px;border-radius:12px;background:#f6f9f7;border:1px solid var(--line2)}
+.evidence{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--line2);color:#44564e;font-size:13px;line-height:1.55}
+.evidence.open{display:block;animation:rise .2s ease both}
+.casebtn{padding:9px 11px;background:#fff;border:1px solid var(--line);color:var(--ink);margin-top:12px}
+.footerhint{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
+@media(max-width:760px){
+  h1{font-size:39px}.hero{padding-top:30px}.grid{grid-template-columns:1fr 1fr}.maprow{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.casehead{display:block}.wrap{padding-left:14px;padding-right:14px}.card{padding:20px}
+}
 </style>
 </head>
 <body><div class="wrap">
 <section class="hero">
-<div class="eyebrow">Självserviceprototyp v0.3</div>
-<h1>Hitta inköpspriserna som är värda att utmana.</h1>
-<div class="sub">Ladda upp en CSV-export. Analysen mappar kolumnerna, kontrollerar datakvaliteten och lyfter fram en kort lista med inköpscase. Filen behandlas lokalt i din webbläsare.</div>
-<div class="badge">Råfilen stannar på den här enheten</div>
+<div class="eyebrow">Procurement Action Scan · Private beta</div>
+<h1>Se vad dina inköpare bör agera på.</h1>
+<div class="sub">Ladda upp inköpshistoriken och få en kort, prioriterad lista över pris- och leverantörscase som är värda att granska.</div>
+<div class="trustrow">
+  <div class="trustitem"><span class="dot"></span>Filen behandlas lokalt</div>
+  <div class="trustitem"><span class="dot"></span>Ingen rådata lagras</div>
+  <div class="trustitem"><span class="dot"></span>Osäker data gissas inte</div>
+</div>
+<div class="steps">
+  <div class="step"><b>1. Ladda upp</b><span>CSV med inköpshistorik</span></div>
+  <div class="step"><b>2. Kontrollera</b><span>Mapping och datakvalitet</span></div>
+  <div class="step"><b>3. Agera</b><span>Prioriterade inköpscase</span></div>
+</div>
 </section>
 
 <div class="card">
-<div id="drop" class="drop"><strong>Släpp din inköpsfil här</strong><div class="small">eller klicka för att välja fil • komma- och semikolonseparerade CSV-filer stöds</div><input id="file" type="file" accept=".csv,text/csv"></div>
-<div id="filemeta" class="small" style="margin-top:10px"></div>
+<div id="drop" class="drop"><div class="dropicon">↑</div><strong>Släpp din inköpsfil här</strong><div class="small">eller klicka för att välja fil · CSV med komma eller semikolon stöds</div><input id="file" type="file" accept=".csv,text/csv"></div>
+<div id="filemeta" class="small" style="margin-top:11px"></div>
 </div>
 
-<div id="mappingCard" class="card hidden"><h2>1. Bekräfta datamappningen</h2><div class="small">Vi har tolkat vilka kolumner som motsvarar de obligatoriska fälten. Ändra om något ser fel ut.</div><div id="mapping"></div><div id="mappingNotice"></div><div class="actions"><button id="runBtn" class="primary">Kör analys</button></div></div>
+<div id="mappingCard" class="card hidden"><h2>1. Bekräfta datamappningen</h2><div class="cardlead">Vi har tolkat vilka kolumner som motsvarar de obligatoriska fälten. Ändra bara om något ser fel ut.</div><div id="mapping"></div><div id="mappingNotice"></div><div class="actions"><button id="runBtn" class="primary">Kör analys</button></div></div>
 
-<div id="healthCard" class="card hidden"><h2>2. Datakvalitet</h2><div id="healthGrid" class="grid"></div><div id="healthNotice"></div><div class="progress"><div id="bar" class="bar"></div></div></div>
+<div id="healthCard" class="card hidden"><h2>2. Datakvalitet</h2><div class="cardlead">Vi kontrollerar om datan är tillräckligt komplett för att analysen ska vara trovärdig.</div><div id="healthGrid" class="grid"></div><div id="healthNotice"></div><div class="progress"><div id="bar" class="bar"></div></div></div>
 
-<div id="resultsCard" class="card hidden"><h2>3. Inköpscase</h2><div id="resultSummary"></div><div id="cases"></div></div>
+<div id="resultsCard" class="card hidden"><h2>3. Inköpscase</h2><div class="cardlead">Högst prioriterade case visas först. Öppna underlaget för att förstå varför ett case flaggats.</div><div id="resultSummary"></div><div id="cases"></div></div>
 </div>
 
 <script>
@@ -135,17 +179,47 @@ function analyze(){
  let cases=[],groups={};cleaned.forEach(x=>{let k=[x.sku,x.sup,x.cur,x.uom].join("|||");(groups[k]??=[]).push(x)});
  let recentStart=new Date(maxD);recentStart.setDate(recentStart.getDate()-120);let baseStart=new Date(recentStart);baseStart.setDate(baseStart.getDate()-240);
  let drift=[];Object.values(groups).forEach(rr=>{let b=rr.filter(x=>x.d>=baseStart&&x.d<recentStart),r=rr.filter(x=>x.d>=recentStart);if(b.length<3||r.length<2)return;let bp=median(b.map(x=>x.p)),rp=median(r.map(x=>x.p)),chg=rp/bp-1;if(chg>=.055)drift.push({sku:rr[0].sku,sup:rr[0].sup,chg,impact:(rp-bp)*r.reduce((a,x)=>a+x.q,0)*365/120})});
- let bySup={};drift.forEach(x=>(bySup[x.sup]??=[]).push(x));Object.entries(bySup).forEach(([sup,arr])=>{if(arr.length<3)return;let impact=arr.reduce((a,x)=>a+Math.max(0,x.impact),0),med=median(arr.map(x=>x.chg));cases.push({title:sup+" – bred prisökning",impact,confidence:arr.length>=5?"Hög":"Medelhög",what:`${arr.length} SKUs visar återkommande prisökningar den senaste perioden. Medianökningen är ${(med*100).toFixed(1)}%.`,action:"Utmana prisökningen på leverantörsnivå och be leverantören förklara prisförändringen."})});
+ let bySup={};drift.forEach(x=>(bySup[x.sup]??=[]).push(x));Object.entries(bySup).forEach(([sup,arr])=>{if(arr.length<3)return;let impact=arr.reduce((a,x)=>a+Math.max(0,x.impact),0),med=median(arr.map(x=>x.chg));cases.push({title:sup+" – bred prisökning",impact,confidence:arr.length>=5?"Hög":"Medelhög",what:`${arr.length} artiklar visar återkommande prisökningar den senaste perioden. Medianökningen är ${(med*100).toFixed(1)}%.`,action:"Utmana prisökningen på leverantörsnivå och be leverantören förklara prisförändringen.",evidence:`${arr.length} artiklar har passerat tröskeln för återkommande prisökning. Medianförändringen är ${(med*100).toFixed(1)} %. Caset bygger på jämförelse mellan en tidigare basperiod och den senaste perioden.`})});
  let skuGroups={};cleaned.forEach(x=>{let k=[x.sku,x.cur,x.uom].join("|||");(skuGroups[k]??=[]).push(x)});
- Object.values(skuGroups).forEach(rr=>{let by={};rr.forEach(x=>(by[x.sup]??=[]).push(x));let st=Object.entries(by).filter(([s,a])=>a.length>=4).map(([s,a])=>({s,med:median(a.map(x=>x.p)),qty:a.reduce((z,x)=>z+x.q,0),n:a.length}));if(st.length<2)return;st.sort((a,b)=>a.med-b.med);let lo=st[0],hi=st[st.length-1],gap=hi.med/lo.med-1;if(gap<.065)return;let impact=(hi.med-lo.med)*hi.qty;if(impact<500)return;cases.push({title:rr[0].sku+" – prisskillnad mellan leverantörer",impact,confidence:(gap>=.08&&lo.n>=4&&hi.n>=4)?"Hög":"Medelhög",what:`Samma artikel och enhet köps återkommande från flera leverantörer. Det högsta medianpriset är ${(gap*100).toFixed(1)}% över det lägsta.`,action:"Kontrollera att villkoren är jämförbara och använd det lägre leverantörspriset som intern referens."})});
- Object.values(groups).forEach(rr=>{if(rr.length<10)return;let med=median(rr.map(x=>x.p)),lo=rr.filter(x=>Math.abs(x.p/med-1)<=.02),hi=rr.filter(x=>x.p>=med*1.055);if(hi.length<2||lo.length<5)return;let lm=new Set(lo.map(x=>monthKey(x.d))),hm=new Set(hi.map(x=>monthKey(x.d))),ov=[...hm].filter(x=>lm.has(x));if(ov.length<2)return;let hmed=median(hi.map(x=>x.p)),gap=hmed/med-1,impact=hi.reduce((a,x)=>a+(x.p-med)*x.q,0);if(impact<500)return;cases.push({title:rr[0].sku+" – inkonsekvent prissättning",impact,confidence:(ov.length>=3&&gap>=.07)?"Hög":"Medelhög",what:`Normala och högre prisnivåer förekommer parallellt under ${ov.length} månader. Transaktionerna med högre pris ligger cirka ${(gap*100).toFixed(1)}% över den dominerande prisnivån.`,action:"Granska transaktionerna med högre pris mot överenskomna kommersiella villkor."})});
+ Object.values(skuGroups).forEach(rr=>{let by={};rr.forEach(x=>(by[x.sup]??=[]).push(x));let st=Object.entries(by).filter(([s,a])=>a.length>=4).map(([s,a])=>({s,med:median(a.map(x=>x.p)),qty:a.reduce((z,x)=>z+x.q,0),n:a.length}));if(st.length<2)return;st.sort((a,b)=>a.med-b.med);let lo=st[0],hi=st[st.length-1],gap=hi.med/lo.med-1;if(gap<.065)return;let impact=(hi.med-lo.med)*hi.qty;if(impact<500)return;cases.push({title:rr[0].sku+" – prisskillnad mellan leverantörer",impact,confidence:(gap>=.08&&lo.n>=4&&hi.n>=4)?"Hög":"Medelhög",what:`Samma artikel och enhet köps återkommande från flera leverantörer. Det högsta medianpriset är ${(gap*100).toFixed(1)}% över det lägsta.`,action:"Kontrollera att villkoren är jämförbara och använd det lägre leverantörspriset som intern referens.",evidence:`Lägre prisnivå: ${lo.med.toFixed(2)} (${lo.n} observationer). Högre prisnivå: ${hi.med.toFixed(2)} (${hi.n} observationer). Skillnad: ${(gap*100).toFixed(1)} %. Jämförelsen görs endast inom samma artikel, valuta och enhet.`})});
+ Object.values(groups).forEach(rr=>{if(rr.length<10)return;let med=median(rr.map(x=>x.p)),lo=rr.filter(x=>Math.abs(x.p/med-1)<=.02),hi=rr.filter(x=>x.p>=med*1.055);if(hi.length<2||lo.length<5)return;let lm=new Set(lo.map(x=>monthKey(x.d))),hm=new Set(hi.map(x=>monthKey(x.d))),ov=[...hm].filter(x=>lm.has(x));if(ov.length<2)return;let hmed=median(hi.map(x=>x.p)),gap=hmed/med-1,impact=hi.reduce((a,x)=>a+(x.p-med)*x.q,0);if(impact<500)return;cases.push({title:rr[0].sku+" – inkonsekvent prissättning",impact,confidence:(ov.length>=3&&gap>=.07)?"Hög":"Medelhög",what:`Normala och högre prisnivåer förekommer parallellt under ${ov.length} månader. Transaktionerna med högre pris ligger cirka ${(gap*100).toFixed(1)}% över den dominerande prisnivån.`,action:"Granska transaktionerna med högre pris mot överenskomna kommersiella villkor.",evidence:`Två prisnivåer förekommer parallellt i ${ov.length} månader. Den högre nivån ligger cirka ${(gap*100).toFixed(1)} % över den dominerande prisnivån. Caset kräver flera observationer för båda nivåerna.`})});
  cases.sort((a,b)=>(b.confidence==="Hög")-(a.confidence==="Hög")||b.impact-a.impact);renderCases(cases.slice(0,10));
 }
 function showHealth(n,skus,sups,excluded,minD,maxD){
  document.getElementById("healthCard").classList.remove("hidden");let months=Math.max(1,Math.round((maxD-minD)/(1000*3600*24*30.4)));const fmt=new Intl.DateTimeFormat("sv-SE",{month:"short",year:"numeric"});document.getElementById("healthGrid").innerHTML=`<div class="metric"><b>${n.toLocaleString("sv-SE")}</b><span>användbara rader</span></div><div class="metric"><b>${skus.toLocaleString("sv-SE")}</b><span>artiklar</span></div><div class="metric"><b>${sups.toLocaleString("sv-SE")}</b><span>leverantörer</span></div><div class="metric"><b>${months} månader</b><span>Analyserad period · ${fmt.format(minD)} – ${fmt.format(maxD)}</span></div>`;let quality=n/(n+excluded),notice=document.getElementById("healthNotice");notice.className="notice "+(quality>=.9?"good":quality>=.75?"warn":"bad");notice.textContent=`${(quality*100).toFixed(1)} % av raderna klarade minimikraven för datakvalitet. ${excluded.toLocaleString("sv-SE")} rader exkluderades i stället för att gissas.`;setTimeout(()=>document.getElementById("bar").style.width=(quality*100)+"%",50)
 }
 function renderCases(cases){
- document.getElementById("resultsCard").classList.remove("hidden");let s=document.getElementById("resultSummary");if(!cases.length){s.innerHTML=`<div class="notice good"><b>Inga tydliga inköpscase hittades.</b> Analysen skapade inte case bara för att fylla sidan.</div>`;document.getElementById("cases").innerHTML="";return}s.innerHTML=`<div class="notice good"><b>${cases.length} inköpscase värda att granska.</b> Case med högst säkerhet visas först.</div>`;document.getElementById("cases").innerHTML=cases.map((c,i)=>`<div class="case"><span class="pill">${esc(c.confidence+" säkerhet")}</span><h3>#${i+1} ${esc(c.title)}</h3><div class="money">${Math.round(c.impact).toLocaleString("sv-SE")} <span class="small">indikativ effekt i källvaluta</span></div><p>${esc(c.what)}</p><p><b>Rekommenderad inköpsåtgärd:</b> ${esc(c.action)}</p></div>`).join("")
+ const results=document.getElementById("resultsCard");
+ results.classList.remove("hidden");
+ let s=document.getElementById("resultSummary");
+ if(!cases.length){
+   s.innerHTML=`<div class="notice good"><b>Inga tydliga inköpscase hittades.</b> Analysen skapade inte case bara för att fylla sidan.</div>`;
+   document.getElementById("cases").innerHTML="";
+   return
+ }
+ s.innerHTML=`<div class="notice good"><b>${cases.length} inköpscase värda att granska.</b> Case med högst säkerhet visas först.</div>`;
+ document.getElementById("cases").innerHTML=cases.map((c,i)=>`
+   <div class="case">
+     <div class="casehead">
+       <div>
+         <span class="pill">${esc(c.confidence+" säkerhet")}</span>
+         <h3>${esc(c.title)}</h3>
+       </div>
+       <div class="priority">Prioritet ${i+1}</div>
+     </div>
+     <div class="money">${Math.round(c.impact).toLocaleString("sv-SE")}</div>
+     <div class="moneylabel">indikativ ekonomisk effekt i källvaluta</div>
+     <p>${esc(c.what)}</p>
+     <div class="actionbox"><b>Rekommenderad åtgärd</b><br>${esc(c.action)}</div>
+     <button class="casebtn" type="button" onclick="toggleEvidence(this)">Visa underlag</button>
+     <div class="evidence"><b>Varför flaggades detta?</b><br>${esc(c.evidence||"Caset bygger på återkommande observationer i den uppladdade inköpshistoriken.")}</div>
+   </div>`).join("");
+ setTimeout(()=>results.scrollIntoView({behavior:"smooth",block:"start"}),80);
+}
+function toggleEvidence(btn){
+ const ev=btn.nextElementSibling;
+ const open=ev.classList.toggle("open");
+ btn.textContent=open?"Dölj underlag":"Visa underlag";
 }
 const drop=document.getElementById("drop"),input=document.getElementById("file");
 drop.addEventListener("click",e=>{if(e.target!==input)input.click()});
@@ -160,6 +234,6 @@ drop.addEventListener("drop",e=>{
   if(files&&files.length) handle(files[0]);
 });
 input.addEventListener("change",e=>handle(e.target.files[0]));
-function handle(file){if(!file)return;let rd=new FileReader();rd.onload=()=>{try{parseCSV(rd.result);document.getElementById("filemeta").textContent=`${file.name} • ${parsed.length.toLocaleString("sv-SE")} rader • identifierad avgränsare: ${delimiter===";"?"semikolon":"komma"}`;document.getElementById("mappingCard").classList.remove("hidden");document.getElementById("healthCard").classList.add("hidden");document.getElementById("resultsCard").classList.add("hidden");renderMapping()}catch(e){document.getElementById("filemeta").innerHTML=`<span style="color:var(--bad)">Kunde inte läsa CSV-filen.</span>`}};rd.readAsText(file)}
+function handle(file){if(!file)return;let rd=new FileReader();rd.onload=()=>{try{parseCSV(rd.result);document.getElementById("filemeta").textContent=`${file.name} • ${parsed.length.toLocaleString("sv-SE")} rader • identifierad avgränsare: ${delimiter===";"?"semikolon":"komma"}`;document.getElementById("mappingCard").classList.remove("hidden");document.getElementById("healthCard").classList.add("hidden");document.getElementById("resultsCard").classList.add("hidden");renderMapping();setTimeout(()=>document.getElementById("mappingCard").scrollIntoView({behavior:"smooth",block:"start"}),80)}catch(e){document.getElementById("filemeta").innerHTML=`<span style="color:var(--bad)">Kunde inte läsa CSV-filen.</span>`}};rd.readAsText(file)}
 document.getElementById("runBtn").addEventListener("click",analyze);
 </script></body></html>
