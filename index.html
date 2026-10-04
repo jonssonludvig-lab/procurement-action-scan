@@ -64,8 +64,9 @@ select{width:100%;padding:11px 12px;border:1px solid #cbd6d0;border-radius:11px;
 <section class="hero">
 <div class="eyebrow">Procurement Action Scan · Private beta</div>
 <h1>Se vad dina inköpare bör agera på.</h1>
-<div class="sub">Ladda upp inköpshistoriken och få en kort, prioriterad lista över pris- och leverantörscase som är värda att granska.</div>
+<div class="sub">Testa hur Procurement Action Scan hittar och prioriterar inköpscase. Den här private beta-versionen är låst till vår syntetiska testfil.</div>
 <div class="trustrow">
+  <div class="trustitem"><span class="dot"></span>Endast syntetisk testdata</div>
   <div class="trustitem"><span class="dot"></span>Filen behandlas lokalt</div>
   <div class="trustitem"><span class="dot"></span>Ingen rådata lagras</div>
   <div class="trustitem"><span class="dot"></span>Osäker data gissas inte</div>
@@ -78,8 +79,9 @@ select{width:100%;padding:11px 12px;border:1px solid #cbd6d0;border-radius:11px;
 </section>
 
 <div class="card">
-<div id="drop" class="drop"><div class="dropicon">↑</div><strong>Släpp din inköpsfil här</strong><div class="small">eller klicka för att välja fil · CSV med komma eller semikolon stöds</div><input id="file" type="file" accept=".csv,text/csv"></div>
-<div id="filemeta" class="small" style="margin-top:11px"></div><div class="footerhint">Analysen körs i din webbläsare. Filens rådata skickas inte vidare från den här sidan.</div>
+<div class="notice warn" style="margin-top:0"><b>Demo/Test mode.</b> Använd endast den syntetiska testfil som du fått tillsammans med länken. Egen företagsdata är spärrad i den här versionen.</div>
+<div id="drop" class="drop"><div class="dropicon">↑</div><strong>Släpp testfilen här</strong><div class="small">eller klicka för att välja den bifogade CSV-testfilen</div><input id="file" type="file" accept=".csv,text/csv"></div>
+<div id="filemeta" class="small" style="margin-top:11px"></div><div class="footerhint">Analysen körs i din webbläsare. Testfilens rådata skickas inte vidare från den här sidan.</div>
 </div>
 
 <div id="mappingCard" class="card hidden"><h2>1. Bekräfta datamappningen</h2><div class="cardlead">Vi har tolkat vilka kolumner som motsvarar de obligatoriska fälten. Ändra bara om något ser fel ut.</div><div id="mapping"></div><div id="mappingNotice"></div><div class="actions"><button id="runBtn" class="primary">Kör analys</button></div></div>
@@ -102,7 +104,13 @@ const aliases={
  desc:["description","artikelbeskrivning","item description","item_description"]
 };
 const required=["date","supplier","sku","quantity","price","currency","uom"];
+const DEMO_FILE_SHA256="e7bfeca693cf7e3ed807641145380773412dc230aa8d495b597c4d6bc09b74e8";
 let parsed=[],headers=[],delimiter=",",scanPeriodLabel="";
+async function sha256File(file){
+ const buf=await file.arrayBuffer();
+ const hash=await crypto.subtle.digest("SHA-256",buf);
+ return [...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
 function norm(s){return(s||"").toString().trim().toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim()}
 function esc(s){return(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function detectDelimiter(line){let c=(line.match(/,/g)||[]).length,s=(line.match(/;/g)||[]).length;return s>c?";":","}
@@ -322,6 +330,32 @@ drop.addEventListener("drop",e=>{
   if(files&&files.length) handle(files[0]);
 });
 input.addEventListener("change",e=>handle(e.target.files[0]));
-function handle(file){if(!file)return;let rd=new FileReader();rd.onload=()=>{try{parseCSV(rd.result);document.getElementById("filemeta").textContent=`${file.name} • ${parsed.length.toLocaleString("sv-SE")} rader • identifierad avgränsare: ${delimiter===";"?"semikolon":"komma"}`;document.getElementById("mappingCard").classList.remove("hidden");document.getElementById("healthCard").classList.add("hidden");document.getElementById("resultsCard").classList.add("hidden");renderMapping();setTimeout(()=>document.getElementById("mappingCard").scrollIntoView({behavior:"smooth",block:"start"}),80)}catch(e){document.getElementById("filemeta").innerHTML=`<span style="color:var(--bad)">Kunde inte läsa CSV-filen.</span>`}};rd.readAsText(file)}
+async function handle(file){
+ if(!file)return;
+ const meta=document.getElementById("filemeta");
+ meta.textContent="Kontrollerar testfilen…";
+ try{
+   const hash=await sha256File(file);
+   if(hash!==DEMO_FILE_SHA256){
+     parsed=[];headers=[];
+     document.getElementById("mappingCard").classList.add("hidden");
+     document.getElementById("healthCard").classList.add("hidden");
+     document.getElementById("resultsCard").classList.add("hidden");
+     input.value="";
+     meta.innerHTML='<span style="color:var(--bad)"><b>Den här private beta-versionen accepterar endast den syntetiska testfilen.</b> Ladda inte upp egen företagsdata ännu.</span>';
+     return;
+   }
+   const text=await file.text();
+   parseCSV(text);
+   meta.textContent=`${file.name} • ${parsed.length.toLocaleString("sv-SE")} rader • verifierad syntetisk testfil`;
+   document.getElementById("mappingCard").classList.remove("hidden");
+   document.getElementById("healthCard").classList.add("hidden");
+   document.getElementById("resultsCard").classList.add("hidden");
+   renderMapping();
+   setTimeout(()=>document.getElementById("mappingCard").scrollIntoView({behavior:"smooth",block:"start"}),80);
+ }catch(e){
+   meta.innerHTML='<span style="color:var(--bad)">Kunde inte läsa eller verifiera testfilen.</span>';
+ }
+}
 document.getElementById("runBtn").addEventListener("click",analyze);
 </script></body></html>
