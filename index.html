@@ -130,7 +130,7 @@ function renderMapping(){
  let ambiguities=[];
  required.forEach(f=>{
    let row=document.createElement("div");row.className="maprow";
-   let label=document.createElement("label");label.textContent=({date:"Datum",supplier:"Leverantör",sku:"Artikelnummer",quantity:"Antal",price:"Inköpspris per enhet",currency:"Valuta",uom:"Enhet"})[f];
+   let label=document.createElement("label");label.textContent=({date:"Datum",supplier:"Leverantör",sku:"Artikelnummer",quantity:"Köpt antal",price:"Inköpspris per enhet",currency:"Valuta",uom:"Enhet"})[f];
    let sel=document.createElement("select");sel.dataset.field=f;
    sel.innerHTML=`<option value="">— inte mappad —</option>`+headers.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join("");
    let g=guess(f); if(g.value) sel.value=g.value;
